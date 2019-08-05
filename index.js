@@ -2,22 +2,55 @@ var express = require('express');
 var app = express();
 var path = require("path");
 var fs = require("fs");
+var mysql  = require('mysql');  
 var bodyParser = require('body-parser');//解析,用req.body获取post参数
 var http = require("http").createServer(app);
 var io = require("socket.io")(http);
 var username = {};
 var usernameToClient = [];
-var storeData;
-var loginText = {
-  "万仲科":"123",
-  "符燕子":"456",
-  "系统":"123"
-}
-islogined = {
-  "万仲科":false,
-  "符燕子":false,
-  "系统":false
-}
+var userandpass = false;
+var rs;
+//打开数据库
+var connection = mysql.createConnection({     
+  host     : 'localhost',       
+  user     : 'root',              
+  password : 'wanzhongke',
+  port: '3306',                   
+  database: 'userlogin'
+});
+connection.connect();
+//连接数据  
+var  sql = 'SELECT * FROM login where name='+"\""+username+"\"";
+// var sql2 = 'select * from login where name="万仲科"';
+connection.query(sql,function (err, result) {
+  if(err){
+    console.log('[SELECT ERROR] - ',err.message);
+    rs = 'fail';
+    return false; 
+  } else if(result[0].name === username && result[0].password === password){
+    console.log('yes');
+    userandpass = true;
+  } else {
+    rs = 'fail';
+  }
+  if(userandpass && result[0].logined !==1) {
+    console.log("logined true");
+    rs = 'ok';
+    console.log("rs is " + rs);
+  } else if(userandpass) {
+    console.log("logined false");
+    rs = 'fail';
+  }
+});
+connection.end();
+// connection.connect();
+// var storeData;
+// var abc =function(username,password){
+
+//     console.log("rs is " + rs);
+//     return rs;
+// };
+
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: false}));
 
@@ -41,11 +74,11 @@ app.all('*', function (req, res, next) {
 //     res.sendFile(__dirname + "/public/Component/index.html");
 // }); 
 app.post('/Login',function(req,res){
-  if(loginText.hasOwnProperty(req.body.username)
-  &&req.body.password === loginText[req.body.username]
-  ){
+  // console.log( "ddddddddddddd" +loginMng(req.body.username,req.body.password));
+  if(rs === 'ok')
+  {
+    console.log("login ok");
     res.send("OK");
-    islogined[req.body.username] = true;
   }
   else
     res.send("fail");
@@ -94,7 +127,6 @@ io.on("connection", function(socket) {
     socket.on('disconnect', function(){
         if(username.hasOwnProperty(socket.id)) {
             console.log(username[socket.id] + ' is disconnected');
-            islogined[username[socket.id]] = false;
             // 如果在线人数不为0，继续删掉下线的用户
             if(usernameToClient.length) {
                  usernameToClient = usernameToClient.filter( item => item !== username[socket.id]);
