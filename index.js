@@ -64,13 +64,7 @@ app.post('/Login',function(req,res){
     if(rows.length) {
       console.log(rows)
       if(rows[0].name===username&&rows[0].password===password&&rows[0].logined===isLogined){
-        // rs='ok';
         res.send("OK");
-        // 登录成功后，修改登录状态为1
-        // let sql = 'update login set logined=1 where name='+'\"'+username+'\"';
-        // query(sql).then(function(rows){
-        //   console.log(rows);
-        // })
       } else {
         res.send("fail");
       }
