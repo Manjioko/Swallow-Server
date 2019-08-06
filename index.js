@@ -67,10 +67,10 @@ app.post('/Login',function(req,res){
         // rs='ok';
         res.send("OK");
         // 登录成功后，修改登录状态为1
-        let sql = 'update login set logined=1 where name='+'\"'+username+'\"';
-        query(sql).then(function(rows){
-          console.log(rows);
-        })
+        // let sql = 'update login set logined=1 where name='+'\"'+username+'\"';
+        // query(sql).then(function(rows){
+        //   console.log(rows);
+        // })
       } else {
         res.send("fail");
       }
@@ -106,6 +106,10 @@ io.on("connection", function(socket) {
         if(usernameToClient.indexOf(msg) === -1) {
           usernameToClient.push(msg);
         }
+
+        let sql = 'update login set logined=1 where name='+'\"'+username[socket.id]+'\"';
+        console.log(sql);
+        query(sql);
 
         let name ='./data/'+ msg +'.json';
         fs.readFile(name,'utf8',function (err, data) {
@@ -146,9 +150,7 @@ io.on("connection", function(socket) {
                 // io.emit('userManageDel',usernameToClient);
                 let sql = 'update login set logined=0 where name='+'\"'+username[socket.id]+'\"';
                 console.log(sql);
-                query(sql).then(function(rows) {
-                  console.log(rows);
-                });
+                query(sql);
                 delete username[socket.id];
                 console.log(username);
                 return;
