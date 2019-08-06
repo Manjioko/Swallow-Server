@@ -76,7 +76,25 @@ app.post('/Login',function(req,res){
       }
     }
   });
-})
+});
+
+app.post('/Register',function(req,res){
+  let sql = 'select * from login where name='+'\"'+req.body.username+'\"';
+  query(sql).then(function(rows){
+    let username=req.body.username;
+    let password=req.body.password;
+    // let isLogined=0;
+    console.log(rows);
+    if(!rows.length) {
+      let reg = 'insert into login (name, logined, password) values(' + '\"' + username +'\",' + 0 + ',\"'+password+'\"'+')';
+      console.log(reg);
+      query(reg)
+      res.send("OK");
+    } else {
+      res.send("repeated");
+    }
+  });
+});
 
 // 用户上线处理
 io.on("connection", function(socket) {
