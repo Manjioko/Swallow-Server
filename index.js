@@ -8,48 +8,36 @@ var http = require("http").createServer(app);
 var io = require("socket.io")(http);
 var username = {};
 var usernameToClient = [];
-var userandpass = false;
-var rs;
+// var userandpass = false;
+// var rs;
 //打开数据库
-var connection = mysql.createConnection({     
+var pool = mysql.createPool({     
   host     : 'localhost',       
   user     : 'root',              
   password : 'wanzhongke',
   port: '3306',                   
   database: 'userlogin'
 });
-connection.connect();
-//连接数据  
-var  sql = 'SELECT * FROM login where name='+"\""+username+"\"";
-// var sql2 = 'select * from login where name="万仲科"';
-connection.query(sql,function (err, result) {
-  if(err){
-    console.log('[SELECT ERROR] - ',err.message);
-    rs = 'fail';
-    return false; 
-  } else if(result[0].name === username && result[0].password === password){
-    console.log('yes');
-    userandpass = true;
-  } else {
-    rs = 'fail';
-  }
-  if(userandpass && result[0].logined !==1) {
-    console.log("logined true");
-    rs = 'ok';
-    console.log("rs is " + rs);
-  } else if(userandpass) {
-    console.log("logined false");
-    rs = 'fail';
-  }
-});
-connection.end();
-// connection.connect();
-// var storeData;
-// var abc =function(username,password){
+var query = function query(sql){
+  return new Promise(function(resolve,reject){
+    pool.getConnection(function(err,conn){
+      if(err) {
+        reject(err);
+      }else {
+        conn.query(sql,function(err,rows){
+          if(err){
+            reject(err);
+          } else {
+            resolve(rows);
+            conn.release();
+            // conn.end();
+          }
+        })
+      }
+    })
+  })
+}
 
-//     console.log("rs is " + rs);
-//     return rs;
-// };
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: false}));
@@ -66,22 +54,28 @@ app.all('*', function (req, res, next) {
   res.header('Content-Type', 'application/json;charset=utf-8');
   next();
 });
-// app.get('/',function(req,res,next){
-//      res.sendFile(__dirname + "/public/Component/login.html");
-// });
-
-// app.get('/chatHome',function(req,res){
-//     res.sendFile(__dirname + "/public/Component/index.html");
-// }); 
+ 
 app.post('/Login',function(req,res){
-  // console.log( "ddddddddddddd" +loginMng(req.body.username,req.body.password));
-  if(rs === 'ok')
-  {
-    console.log("login ok");
-    res.send("OK");
-  }
-  else
-    res.send("fail");
+  let sql = 'select * from login where name='+'\"'+req.body.username+'\"';
+  query(sql).then(function(rows){
+    let username=req.body.username;
+    let password=req.body.password;
+    let isLogined=0;
+    if(rows.length) {
+      console.log(rows)
+      if(rows[0].name===username&&rows[0].password===password&&rows[0].logined===isLogined){
+        // rs='ok';
+        res.send("OK");
+        // 登录成功后，修改登录状态为1
+        let sql = 'update login set logined=1 where name='+'\"'+username+'\"';
+        query(sql).then(function(rows){
+          console.log(rows);
+        })
+      } else {
+        res.send("fail");
+      }
+    }
+  });
 })
 
 // 用户上线处理
@@ -131,11 +125,17 @@ io.on("connection", function(socket) {
             if(usernameToClient.length) {
                  usernameToClient = usernameToClient.filter( item => item !== username[socket.id]);
                 io.emit('userManageDel',username[socket.id])
-                delete username[socket.id];
                 // io.emit('userManageDel',usernameToClient);
+                let sql = 'update login set logined=0 where name='+'\"'+username[socket.id]+'\"';
+                console.log(sql);
+                query(sql).then(function(rows) {
+                  console.log(rows);
+                });
+                delete username[socket.id];
                 console.log(username);
                 return;
             }
+            // 退出登录后，修改数据库Logined 值为0
             // 这是为0 的情况，直接删掉对象值即可，这里需要注意。
             delete username[socket.id];
             console.log(username);
