@@ -4,6 +4,11 @@
 			"myself",
 			"你好万仲科",
 			"avatarMyself"
+		],
+		[
+			"myself",
+			"我ipad又回来了@@万仲科",
+			"avatarMyself"
 		]
 	],
 	"符燕子": [
@@ -11,6 +16,16 @@
 			"myself",
 			"你好啊燕子",
 			"avatarMyself"
+		],
+		[
+			"myself",
+			"我ipad又回来了@@燕子",
+			"avatarMyself"
+		],
+		[
+			"other",
+			"欢迎回来呀IPAD\n",
+			"avatarOther"
 		]
 	]
 }
